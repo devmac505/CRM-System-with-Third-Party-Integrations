@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200px" height="60px" viewBox="0 0 200 60" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>CRM Logo</title>
+    <g id="Logo" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <path d="M30,10 C41.045695,10 50,18.954305 50,30 C50,41.045695 41.045695,50 30,50 C18.954305,50 10,41.045695 10,30 C10,18.954305 18.954305,10 30,10 Z" id="Circle" fill="#2563EB"></path>
+        <text id="CRM" font-family="Arial-BoldMT, Arial" font-size="24" font-weight="bold" fill="#FFFFFF">
+            <tspan x="12" y="38">CRM</tspan>
+        </text>
+        <text id="System" font-family="ArialMT, Arial" font-size="24" font-weight="normal" fill="#2563EB">
+            <tspan x="60" y="38">System</tspan>
+        </text>
+    </g>
+</svg>

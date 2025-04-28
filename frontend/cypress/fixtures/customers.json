@@ -1,0 +1,18 @@
+{
+  "customers": [
+    {
+      "name": "John Doe",
+      "email": "john@example.com",
+      "phone": "123-456-7890",
+      "company": "ABC Corp",
+      "status": "active"
+    },
+    {
+      "name": "Jane Smith",
+      "email": "jane@example.com",
+      "phone": "987-654-3210",
+      "company": "XYZ Inc",
+      "status": "lead"
+    }
+  ]
+}
