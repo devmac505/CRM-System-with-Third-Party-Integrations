@@ -10,21 +10,79 @@ import {
   FaCheckCircle,
   FaExclamationTriangle,
   FaBell,
-  FaTasks
+  FaTasks,
+  FaArrowUp,
+  FaArrowDown
 } from 'react-icons/fa';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
+import { Line, Bar } from 'react-chartjs-2';
 import Card from '../../components/UI/Card';
 import { getCustomers } from '../../api/customerService';
 import { getLeads } from '../../api/leadService';
 import { getOrders } from '../../api/orderService';
 import { getCampaigns } from '../../api/campaignService';
+import { getDashboardSummary } from '../../api/analyticsService';
 import { formatCurrency } from '../../utils/formatCurrency';
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
-    customers: { count: 0, loading: true },
-    leads: { count: 0, loading: true },
-    orders: { count: 0, total: 0, loading: true },
+    customers: { count: 0, growth: 0, loading: true },
+    leads: { count: 0, growth: 0, loading: true },
+    orders: { count: 0, total: 0, growth: 0, loading: true },
     campaigns: { count: 0, loading: true }
+  });
+
+  const [chartData, setChartData] = useState({
+    revenueChart: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+      datasets: [
+        {
+          label: 'Revenue',
+          data: [0, 0, 0, 0, 0, 0],
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          tension: 0.4,
+          fill: true
+        }
+      ]
+    },
+    leadsChart: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+      datasets: [
+        {
+          label: 'New Leads',
+          data: [0, 0, 0, 0, 0, 0],
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          tension: 0.4,
+          fill: true
+        }
+      ]
+    }
   });
 
   const [recentActivities] = useState([
@@ -45,47 +103,113 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch customers
-        const customersData = await getCustomers();
-        setStats(prev => ({
-          ...prev,
+        // Fetch all required data in parallel
+        const [customersData, leadsData, ordersData, campaignsData, dashboardSummary] = await Promise.all([
+          getCustomers(),
+          getLeads(),
+          getOrders(),
+          getCampaigns(),
+          getDashboardSummary().catch(() => null) // Optional data, don't fail if not available
+        ]);
+
+        // Process customers data
+        const customerCount = customersData.count || 0;
+
+        // Process leads data
+        const leadCount = leadsData.count || 0;
+
+        // Process orders data
+        const orderCount = ordersData.count || 0;
+        const totalRevenue = ordersData.data?.reduce((sum, order) => sum + (order.totalAmount || 0), 0) || 0;
+
+        // Process campaigns data
+        const campaignCount = campaignsData.count || 0;
+
+        // Update stats with growth data from dashboard summary if available
+        setStats({
           customers: {
-            count: customersData.count || 0,
+            count: customerCount,
+            growth: dashboardSummary?.customerGrowth || 5, // Default value if API not available
             loading: false
-          }
-        }));
-
-        // Fetch leads
-        const leadsData = await getLeads();
-        setStats(prev => ({
-          ...prev,
+          },
           leads: {
-            count: leadsData.count || 0,
+            count: leadCount,
+            growth: dashboardSummary?.leadGrowth || 8, // Default value if API not available
             loading: false
-          }
-        }));
-
-        // Fetch orders
-        const ordersData = await getOrders();
-        const totalRevenue = ordersData.data?.reduce((sum, order) => sum + order.totalAmount, 0) || 0;
-        setStats(prev => ({
-          ...prev,
+          },
           orders: {
-            count: ordersData.count || 0,
+            count: orderCount,
             total: totalRevenue,
+            growth: dashboardSummary?.revenueGrowth || 12, // Default value if API not available
             loading: false
-          }
-        }));
-
-        // Fetch campaigns
-        const campaignsData = await getCampaigns();
-        setStats(prev => ({
-          ...prev,
+          },
           campaigns: {
-            count: campaignsData.count || 0,
+            count: campaignCount,
             loading: false
           }
-        }));
+        });
+
+        // Update chart data if dashboard summary is available
+        if (dashboardSummary) {
+          setChartData({
+            revenueChart: {
+              labels: dashboardSummary.revenueChart?.labels || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+              datasets: [
+                {
+                  label: 'Revenue',
+                  data: dashboardSummary.revenueChart?.data || [3000, 4500, 3800, 5200, 4800, 6000],
+                  borderColor: '#3b82f6',
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  tension: 0.4,
+                  fill: true
+                }
+              ]
+            },
+            leadsChart: {
+              labels: dashboardSummary.leadsChart?.labels || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+              datasets: [
+                {
+                  label: 'New Leads',
+                  data: dashboardSummary.leadsChart?.data || [25, 38, 32, 45, 40, 52],
+                  borderColor: '#10b981',
+                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  tension: 0.4,
+                  fill: true
+                }
+              ]
+            }
+          });
+        } else {
+          // Use sample data if API not available
+          setChartData({
+            revenueChart: {
+              labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+              datasets: [
+                {
+                  label: 'Revenue',
+                  data: [3000, 4500, 3800, 5200, 4800, 6000],
+                  borderColor: '#3b82f6',
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  tension: 0.4,
+                  fill: true
+                }
+              ]
+            },
+            leadsChart: {
+              labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+              datasets: [
+                {
+                  label: 'New Leads',
+                  data: [25, 38, 32, 45, 40, 52],
+                  borderColor: '#10b981',
+                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  tension: 0.4,
+                  fill: true
+                }
+              ]
+            }
+          });
+        }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         // Set loading to false even if there's an error
@@ -133,7 +257,46 @@ const Dashboard = () => {
     }
   };
 
-  const StatCard = ({ title, value, icon, loading, link, color }) => (
+  // Chart options
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false
+      },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: {
+          display: true,
+          drawBorder: false,
+        }
+      },
+      x: {
+        grid: {
+          display: false,
+          drawBorder: false,
+        }
+      }
+    },
+    elements: {
+      line: {
+        tension: 0.4
+      },
+      point: {
+        radius: 2,
+        hoverRadius: 4
+      }
+    }
+  };
+
+  const StatCard = ({ title, value, icon, loading, link, color, trend, trendValue }) => (
     <Card className="stat-card">
       <div className={`stat-icon ${color}`}>
         {icon}
@@ -147,12 +310,22 @@ const Dashboard = () => {
             value
           )}
         </p>
-        <Link to={link} className="form-link inline-flex items-center">
-          View details
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-          </svg>
-        </Link>
+        <div className="flex items-center justify-between mt-1">
+          {trend && trendValue !== undefined && (
+            <span className={`text-xs font-medium px-2 py-1 rounded-full flex items-center ${
+              trendValue >= 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }`}>
+              {trendValue >= 0 ? <FaArrowUp className="mr-1" /> : <FaArrowDown className="mr-1" />}
+              {Math.abs(trendValue)}%
+            </span>
+          )}
+          <Link to={link} className="form-link inline-flex items-center ml-auto">
+            View details
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </Link>
+        </div>
       </div>
     </Card>
   );
@@ -172,6 +345,8 @@ const Dashboard = () => {
           loading={stats.customers.loading}
           link="/customers"
           color="stat-icon-customers"
+          trend={true}
+          trendValue={stats.customers.growth}
         />
         <StatCard
           title="Active Leads"
@@ -180,6 +355,8 @@ const Dashboard = () => {
           loading={stats.leads.loading}
           link="/leads"
           color="stat-icon-leads"
+          trend={true}
+          trendValue={stats.leads.growth}
         />
         <StatCard
           title="Total Orders"
@@ -188,6 +365,8 @@ const Dashboard = () => {
           loading={stats.orders.loading}
           link="/orders"
           color="stat-icon-orders"
+          trend={true}
+          trendValue={stats.orders.growth}
         />
         <StatCard
           title="Campaigns"
@@ -201,22 +380,33 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <Card title="Revenue Overview">
-          <div className="flex items-center justify-center h-full">
+          <div className="h-64">
             {stats.orders.loading ? (
-              <p className="text-gray-500">Loading revenue data...</p>
-            ) : (
-              <div className="text-center">
-                <div className="stat-icon stat-icon-revenue mb-4 mx-auto">
-                  <FaChartLine />
-                </div>
-                <h3 className="stat-title">Total Revenue</h3>
-                <p className="stat-value mb-2">
-                  {formatCurrency(stats.orders.total)}
-                </p>
-                <p className="text-sm text-gray-500 mt-2 bg-gray-100 px-3 py-1 rounded-full inline-block">
-                  From {stats.orders.count} orders
-                </p>
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-500">Loading revenue data...</p>
               </div>
+            ) : (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {formatCurrency(stats.orders.total)}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      Total Revenue
+                    </p>
+                  </div>
+                  <div className={`text-sm font-medium px-2 py-1 rounded-full flex items-center ${
+                    stats.orders.growth >= 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {stats.orders.growth >= 0 ? <FaArrowUp className="mr-1" /> : <FaArrowDown className="mr-1" />}
+                    {Math.abs(stats.orders.growth)}%
+                  </div>
+                </div>
+                <div className="h-48">
+                  <Line data={chartData.revenueChart} options={chartOptions} />
+                </div>
+              </>
             )}
           </div>
         </Card>
@@ -268,6 +458,87 @@ const Dashboard = () => {
               </div>
               <span className="quick-action-text">View Analytics</span>
             </Link>
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <Card title="Lead Conversion" headerClassName="border-l-4 border-green-500">
+          <div className="h-64">
+            {stats.leads.loading ? (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-500">Loading lead data...</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {stats.leads.count} Leads
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      Active in pipeline
+                    </p>
+                  </div>
+                  <div className={`text-sm font-medium px-2 py-1 rounded-full flex items-center ${
+                    stats.leads.growth >= 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {stats.leads.growth >= 0 ? <FaArrowUp className="mr-1" /> : <FaArrowDown className="mr-1" />}
+                    {Math.abs(stats.leads.growth)}%
+                  </div>
+                </div>
+                <div className="h-48">
+                  <Line data={chartData.leadsChart} options={chartOptions} />
+                </div>
+              </>
+            )}
+          </div>
+        </Card>
+
+        <Card title="Sales Pipeline Summary" headerClassName="border-l-4 border-purple-500">
+          <div className="h-64 overflow-hidden">
+            <div className="flex flex-col h-full">
+              <div className="flex-1 overflow-y-auto">
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-500 mb-1">Qualified Leads</h4>
+                    <p className="text-xl font-semibold text-gray-900">24</p>
+                    <div className="mt-2 text-xs text-green-600 flex items-center">
+                      <FaArrowUp className="mr-1" /> 12% from last month
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-500 mb-1">Proposals</h4>
+                    <p className="text-xl font-semibold text-gray-900">18</p>
+                    <div className="mt-2 text-xs text-green-600 flex items-center">
+                      <FaArrowUp className="mr-1" /> 8% from last month
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-500 mb-1">Negotiations</h4>
+                    <p className="text-xl font-semibold text-gray-900">12</p>
+                    <div className="mt-2 text-xs text-red-600 flex items-center">
+                      <FaArrowDown className="mr-1" /> 5% from last month
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-500 mb-1">Closed Won</h4>
+                    <p className="text-xl font-semibold text-gray-900">8</p>
+                    <div className="mt-2 text-xs text-green-600 flex items-center">
+                      <FaArrowUp className="mr-1" /> 15% from last month
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-2 text-center">
+                <Link to="/leads/pipeline" className="form-link inline-flex items-center">
+                  View full pipeline
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </Link>
+              </div>
+            </div>
           </div>
         </Card>
       </div>

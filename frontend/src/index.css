@@ -343,6 +343,104 @@ body {
   margin-bottom: 0.25rem;
 }
 
+/* Chart Styles */
+.chart-container {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.chart-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.chart-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.chart-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.chart-trend {
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.chart-trend-up {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
+.chart-trend-down {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.chart-trend-icon {
+  margin-right: 0.25rem;
+}
+
+/* Pipeline Card Styles */
+.pipeline-card {
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  transition: all 0.2s ease;
+}
+
+.pipeline-card:hover {
+  background-color: #f3f4f6;
+  transform: translateY(-2px);
+}
+
+.pipeline-stage {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.pipeline-count {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.pipeline-value {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+/* Activity Icons */
+.activity-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  color: white;
+  margin-right: 0.75rem;
+}
+
 /* Mobile Menu */
 .mobile-menu {
   position: absolute;
