@@ -10,6 +10,7 @@ const leadRoutes = require('./routes/leadRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const campaignRoutes = require('./routes/campaignRoutes');
 const webhookRoutes = require('./routes/webhookRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -28,6 +29,7 @@ app.use('/api/leads', leadRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/webhooks', webhookRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Root route
 app.get('/', (req, res) => {

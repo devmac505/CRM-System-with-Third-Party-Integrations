@@ -14,6 +14,7 @@ import ResetPassword from './pages/Auth/ResetPassword';
 
 // Dashboard Pages
 import Dashboard from './pages/Dashboard/Dashboard';
+import Analytics from './pages/Analytics/Analytics';
 
 // Customer Pages
 import CustomerList from './pages/Customers/CustomerList';
@@ -90,7 +91,7 @@ function App() {
             <Route path="campaigns/new" element={<div>Create Campaign Page</div>} />
             <Route path="campaigns/:id" element={<div>Campaign Details Page</div>} />
 
-            <Route path="analytics" element={<div>Analytics Page</div>} />
+            <Route path="analytics" element={<Analytics />} />
             <Route path="profile" element={<div>Profile Page</div>} />
           </Route>
 
